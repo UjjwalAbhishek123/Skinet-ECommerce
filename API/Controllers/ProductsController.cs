@@ -1,4 +1,5 @@
 ﻿using Core.Entities;
+using Core.Interfaces;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,20 +11,20 @@ namespace API.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        //injecting StoreContext object
-        private readonly StoreContext _storeContext;
+        //injecting IProductRepository object, as we are using here Repository Pattern
+        private readonly IProductRepository _repo;
 
-        public ProductsController(StoreContext storeContext)
+        public ProductsController(IProductRepository repo)
         {
-            _storeContext = storeContext;
+            _repo = repo;
         }
 
         //creating http endpoints
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<IReadOnlyList<Product>>> GetProducts()
         {
             //logic to return list of products, getting it from DB
-            return await _storeContext.Products.ToListAsync();
+            return Ok(await _repo.GetProductAsync());
         }
 
         //endpoint for getting product at particular id
@@ -32,7 +33,7 @@ namespace API.Controllers
         {
             //finding product at particular id in Products table
             //product can be null here
-            var product = await _storeContext.Products.FindAsync(id);
+            var product = await _repo.GetProductByIdAsync(id);
 
             //checking if product is null, i.e. product is not found at id
             if(product == null)
@@ -47,11 +48,14 @@ namespace API.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct(Product product)
         {
-            _storeContext.Products.Add(product);
+            _repo.AddProduct(product);
 
-            await _storeContext.SaveChangesAsync();
+            if (await _repo.SaveChangesAsync())
+            {
+                return CreatedAtAction("GetProductById", new { id = product.Id }, product);
+            }
 
-            return product;
+            return BadRequest("Problem creating product");
         }
 
         [HttpPut("{id:int}")]
@@ -63,33 +67,42 @@ namespace API.Controllers
             }
 
             //it will tell EF tracker, that what we're passing here is entity effectively and it has been modified
-            _storeContext.Entry(product).State = EntityState.Modified;
+            //_storeContext.Entry(product).State = EntityState.Modified;
 
-            await _storeContext.SaveChangesAsync();
+            _repo.UpdateProduct(product);
 
-            return NoContent();
+            if (await _repo.SaveChangesAsync())
+            {
+                return NoContent();
+            }
+
+            return BadRequest("Problem updating product");
         }
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> DeleteProduct(int id)
         {
-            var product = await _storeContext.Products.FindAsync(id);
+            var product = await _repo.GetProductByIdAsync(id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            _storeContext.Products.Remove(product);
-            await _storeContext.SaveChangesAsync();
+            _repo.DeleteProduct(product);
 
-            return NoContent();
+            if (await _repo.SaveChangesAsync())
+            {
+                return NoContent();
+            }
+
+            return BadRequest("Problem deleting product");
         }
 
         //method to check if product exists or not
         private bool ProductExist(int id)
         {
-            return _storeContext.Products.Any(p => p.Id == id);
+            return _repo.ProductExists(id);
         }
     }
 }
