@@ -99,6 +99,20 @@ namespace API.Controllers
             return BadRequest("Problem deleting product");
         }
 
+        //action method to get brands
+        [HttpGet("brands")]
+        public async Task<ActionResult<IReadOnlyList<string>>> GetBrands()
+        {
+            return Ok(await _repo.GetBrandAsync());
+        }
+
+        //action method to get Types
+        [HttpGet("types")]
+        public async Task<ActionResult<IReadOnlyList<string>>> GetTypes()
+        {
+            return Ok(await _repo.GetTypesAsync());
+        }
+
         //method to check if product exists or not
         private bool ProductExist(int id)
         {

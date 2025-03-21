@@ -44,6 +44,21 @@ namespace Infrastructure.Data
             return _context.Products.Any(x => x.Id == id);
         }
 
+        //implementing methods related to brands and types
+        public async Task<IReadOnlyList<string>> GetBrandAsync()
+        {
+            return await _context.Products.Select(x => x.Brand)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<string>> GetTypesAsync()
+        {
+            return await _context.Products.Select(x => x.Type)
+                .Distinct()
+                .ToListAsync();
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

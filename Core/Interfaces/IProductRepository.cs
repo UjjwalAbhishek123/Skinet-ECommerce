@@ -15,6 +15,10 @@ namespace Core.Interfaces
         void UpdateProduct(Product product);
         void DeleteProduct(Product product);
         bool ProductExists(int id);
+
+        //methods to get brands and types
+        Task<IReadOnlyList<string>> GetBrandAsync();
+        Task<IReadOnlyList<string>> GetTypesAsync();
         Task<bool> SaveChangesAsync();
     }
 }
