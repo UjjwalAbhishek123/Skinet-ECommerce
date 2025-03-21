@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,9 +30,35 @@ namespace Infrastructure.Data
             _context.Products.Remove(product);
         }
 
-        public async Task<IReadOnlyList<Product>> GetProductAsync()
+        public async Task<IReadOnlyList<Product>> GetProductAsync(string? brand, string? type, string? sort)
         {
-            return await _context.Products.ToListAsync();
+            //AsQueryable() use karne se query dynamically modify ho sakti hai.
+            //Jab tak ToList(), FirstOrDefault() ya koi aur enumeration method call nahi hoti, tab tak SQL query execute nahi hoti.
+            //Dynamic filtering ke liye yeh best practice hai.
+            var query = _context.Products.AsQueryable();
+
+            //filtering brand
+            if (!string.IsNullOrWhiteSpace(brand))
+            {
+                query = query.Where(x => x.Brand == brand);
+            }
+
+            //filtering type
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                query = query.Where(x => x.Type == type);
+            }
+
+            //query to sort
+            query = sort switch
+            {
+                "priceAsc" => query.OrderBy(x => x.Price),
+                "priceDesc" => query.OrderByDescending(x => x.Price),
+                _ => query.OrderBy(x => x.Name)
+            };
+
+            //return await _context.Products.ToListAsync();
+            return await query.ToListAsync();
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)

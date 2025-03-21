@@ -21,10 +21,10 @@ namespace API.Controllers
 
         //creating http endpoints
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<Product>>> GetProducts()
+        public async Task<ActionResult<IReadOnlyList<Product>>> GetProducts(string? brand, string? type, string? sort)
         {
             //logic to return list of products, getting it from DB
-            return Ok(await _repo.GetProductAsync());
+            return Ok(await _repo.GetProductAsync(brand, type, sort));
         }
 
         //endpoint for getting product at particular id

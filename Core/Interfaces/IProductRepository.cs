@@ -9,7 +9,7 @@ namespace Core.Interfaces
     public interface IProductRepository
     {
         //methods related to products
-        Task<IReadOnlyList<Product>> GetProductAsync();
+        Task<IReadOnlyList<Product>> GetProductAsync(string? brand, string? type, string? sort); //adding parameter to filter based on brand and type and sort
         Task<Product?> GetProductByIdAsync(int id);
         void AddProduct(Product product);
         void UpdateProduct(Product product);
